@@ -1,0 +1,76 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd ">
+
+
+	<!-- processEngineConfiguration配置流程引擎配置对象配置说明: 1,databaseType:这个参数并不是必须设置，但是在采用非H2的数据库时候，就是必须的，这个设置在数据库创建和查询时候使用。 
+		2,databaseSchemaUpdate:在工作流引擎启动和关闭的使用数据库的针对表结构的处理策略。 false(默认):在工作流引擎启动时检查数据库脚本的版本和activiti 
+		library的版本是否一致如果不一致抛出异常信息。 true:在脚本结构发生变化时候，检查表结构是否存在，如果存在则更新，如果不存在则创建。 create-drop:当工作流引擎被创建时候创建，当工作流引擎关闭时删除表结构信息。 
+		3,Job executor activation: JobExecutor是一个管理一系列激活timer和异步消息的线程的组件。 在单元测试里可以使用ManagementService.createJobQuery查询线程，使用ManagementService.executeJob执行线程的方法。 
+		默认情况下JobExecutor在流程引擎启动的时候激活状态。可以通过以下方式关闭。 <property name="jobExecutorActivate" 
+		value="false" /> 4,Mail Server配置：activiti支持在业务流程中发送电子邮件。如果要发送一个邮件，必须配置一个有效的SMTP邮件服务器配置。 -->
+
+	<!-- Activiti处理引擎的配置，交由Spring管理 -->
+	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
+		<!-- 配置数据源,和系统使用同一个数据源 -->
+		<property name="dataSource" ref="dataSource" />
+		<property name="databaseSchemaUpdate" value="true" />
+		<property name="jobExecutorActivate" value="false" />
+
+		<!-- 统一的事务管理 -->
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="activityFontName" value="宋体" />
+		<property name="labelFontName" value="宋体" />
+
+		<!-- 事件监听器 -->
+		<property name="eventListeners">
+			<list>
+				<bean class="cn.com.geoway.activiti.listener.MyEventListener" />
+			</list>
+		</property>
+
+		<!-- 类型监听器,只是监听key中给出的事件 -->
+		<property name="typedEventListeners">
+			<map>
+				<entry key="JOB_EXECUTION_SUCCESS,JOB_EXECUTION_FAILURE">
+					<list>
+						<bean class="cn.com.geoway.activiti.listener.MyJobEventListener" />
+					</list>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!-- 流程引擎 -->
+	<bean id="processEngine" class="org.activiti.spring.ProcessEngineFactoryBean">
+		<property name="processEngineConfiguration" ref="processEngineConfiguration" />
+	</bean>
+
+	<!-- 创建各种流程引擎的服务,需要哪个注入哪个 -->
+	<bean id="repositoryService" factory-bean="processEngine"
+		factory-method="getRepositoryService" />
+	<bean id="runtimeService" factory-bean="processEngine"
+		factory-method="getRuntimeService" />
+	<bean id="taskService" factory-bean="processEngine"
+		factory-method="getTaskService" />
+	<bean id="formService" factory-bean="processEngine"
+		factory-method="getFormService" />
+	<bean id="historyService" factory-bean="processEngine"
+		factory-method="getHistoryService" />
+	<bean id="managementService" factory-bean="processEngine"
+		factory-method="getManagementService" />
+	<bean id="identityService" factory-bean="processEngine"
+		factory-method="getIdentityService" />
+
+</beans>

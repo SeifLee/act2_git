@@ -1,0 +1,59 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.0.xsd ">
+
+
+	<!-- 配置shiro的bean -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- 注入安全管理器对象 -->
+		<property name="securityManager" ref="securityManager" />
+		<!-- 登录页面url地址 -->
+		<property name="loginUrl" value="/login.jsp" />
+		<!-- 登录陈功页面 -->
+		<property name="successUrl" value="/index.jsp" />
+		<!-- 权限不足提示页面 -->
+		<property name="unauthorizedUrl" value="/unauthorized.jsp" />
+		<!-- 基于url拦截,使用过滤器进行拦截 -->
+		<property name="filterChainDefinitions">
+			<value>
+				/css/** = anon
+				/images/** = anon
+				/js/** = anon
+				/validatecode.jsp* = anon
+				/login.jsp = anon
+				/userAction_login.action =
+				anon
+				/page_base_staff.action = perms["staff"]
+				/** = authc
+			</value>
+		</property>
+	</bean>
+
+	<!-- 配置安全管理器 -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="dpfRealm" />
+		<!-- 注入缓存管理器 -->
+		<property name="cacheManager" ref="cacheManager" />
+	</bean>
+
+	<!-- 配置缓存管理器 -->
+	<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+		<!-- 加载缓存配置文件 -->
+		<property name="cacheManagerConfigFile" value="classpath:ehcache.xml" />
+	</bean>
+
+	<!-- 配置自定义的realm:进行认证和授权操作 -->
+	<bean id="dpfRealm" class="cn.com.geoway.shiro.DPFRealm" />
+
+</beans>
